@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import androidx.annotation.NonNull;
 import androidx.media3.common.C;
 import androidx.media3.common.util.Assertions;
@@ -23,6 +22,7 @@ import androidx.media3.datasource.DataSourceInputStream;
 import androidx.media3.datasource.DataSpec;
 import androidx.media3.datasource.HttpDataSource;
 
+// FIXME: If you user license encrypt feature then please uncomment 2 lines below
 import com.sigma.packer.RequestInfo;
 import com.sigma.packer.SigmaDrmPacker;
 
@@ -143,15 +143,14 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
     }
 
     while (true) {
-      DataSpec dataSpec =
-              new DataSpec(
-                      Uri.parse(url),
-                      data,
-                      /* absoluteStreamPosition= */ 0,
-                      /* position= */ 0,
-                      /* length= */ C.LENGTH_UNSET,
-                      /* key= */ null,
-                      DataSpec.FLAG_ALLOW_GZIP);
+      DataSpec dataSpec = new DataSpec.Builder()
+              .setUri(Uri.parse(url))
+              .setHttpBody(data)
+              .setPosition(0)
+              .setLength(C.LENGTH_UNSET)
+              .setKey(null)
+              .setFlags(DataSpec.FLAG_ALLOW_GZIP)
+              .build();
       DataSourceInputStream inputStream = new DataSourceInputStream(dataSource, dataSpec);
       try {
         return Util.toByteArray(inputStream);
@@ -176,6 +175,7 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
     customData.put("userId", "media3_userId_12346");
     customData.put("sessionId", "media3_sessionId_12355");
 
+    // FIXME: If you user license encrypt feature then please uncomment 3 lines below
     RequestInfo requestInfo = SigmaDrmPacker.requestInfo(keyRequest.getData());
     customData.put("reqId", requestInfo.requestId);
     customData.put("deviceInfo", requestInfo.deviceInfo);
