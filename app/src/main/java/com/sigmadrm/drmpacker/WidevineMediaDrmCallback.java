@@ -143,15 +143,11 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
     }
 
     while (true) {
-      DataSpec dataSpec =
-              new DataSpec(
-                      Uri.parse(url),
-                      data,
-                      /* absoluteStreamPosition= */ 0,
-                      /* position= */ 0,
-                      /* length= */ C.LENGTH_UNSET,
-                      /* key= */ null,
-                      DataSpec.FLAG_ALLOW_GZIP);
+        DataSpec dataSpec = new DataSpec(Uri.parse(url)).buildUpon()
+                .setHttpMethod(DataSpec.HTTP_METHOD_POST)
+                .setHttpBody(data)
+                .setFlags(DataSpec.FLAG_ALLOW_GZIP)
+                .build();
       DataSourceInputStream inputStream = new DataSourceInputStream(dataSource, dataSpec);
       try {
         return Util.toByteArray(inputStream);
