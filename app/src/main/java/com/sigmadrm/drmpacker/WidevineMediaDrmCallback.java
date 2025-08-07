@@ -145,6 +145,7 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
     while (true) {
       DataSpec dataSpec = new DataSpec.Builder()
               .setUri(Uri.parse(url))
+              .setHttpMethod(DataSpec.HTTP_METHOD_POST)
               .setHttpBody(data)
               .setPosition(0)
               .setLength(C.LENGTH_UNSET)
