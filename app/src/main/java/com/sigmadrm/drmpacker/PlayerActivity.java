@@ -34,7 +34,8 @@ import androidx.media3.ui.PlayerView;
 import com.sigma.packer.SigmaMediaDrm;
 
 @UnstableApi
-public class PlayerActivity extends AppCompatActivity implements View.OnClickListener, PlayerControlView.VisibilityListener {
+public class PlayerActivity extends AppCompatActivity
+    implements View.OnClickListener, PlayerControlView.VisibilityListener {
   private PlayerView playerView;
   private ExoPlayer player;
   private DefaultTrackSelector trackSelector;
@@ -61,7 +62,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
   }
 
   private void initStream() {
-    videoPath = "https://sdrm-test.gviet.vn:9080/static/vod_staging/the_box/manifest.mpd";
+    videoPath = "https://sdrm-test.gviet.vn:9080/drm/static/vod_staging/big_bug_bunny/manifest.mpd";
     drmLicenseUrl = "https://license-staging.sigmadrm.com/license/verify/widevine";
   }
 
@@ -118,10 +119,11 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                         @NonNull int[] grantResults) {
+      @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     if (grantResults.length == 0) {
-      // Empty results are triggered if a permission is requested while another request was already
+      // Empty results are triggered if a permission is requested while another
+      // request was already
       // pending and can be safely ignored in this case.
       return;
     }
@@ -143,30 +145,28 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     if (Util.SDK_INT >= 18) {
       UUID drmSchemeUuid = Assertions.checkNotNull(Util.getDrmUuid("widevine"));
       MediaDrmCallback drmCallback = createMediaDrmCallback(drmLicenseUrl, null);
-      drmSessionManager =
-              new DefaultDrmSessionManager.Builder()
-                      .setMultiSession(true)
-                      .setUuidAndExoMediaDrmProvider(drmSchemeUuid, SigmaMediaDrm.DEFAULT_PROVIDER)
-                      .build(drmCallback);
+      drmSessionManager = new DefaultDrmSessionManager.Builder()
+          .setMultiSession(true)
+          .setUuidAndExoMediaDrmProvider(drmSchemeUuid, SigmaMediaDrm.DEFAULT_PROVIDER)
+          .build(drmCallback);
     } else {
       drmSessionManager = DrmSessionManager.DRM_UNSUPPORTED;
     }
 
     MediaItem mediaItem = MediaItem.fromUri(Uri.parse(videoPath));
-    MediaSource.Factory mediaSourceFactory =
-            new DefaultMediaSourceFactory(getApplicationContext())
-                    .setDrmSessionManagerProvider(mi -> drmSessionManager);
+    MediaSource.Factory mediaSourceFactory = new DefaultMediaSourceFactory(getApplicationContext())
+        .setDrmSessionManagerProvider(mi -> drmSessionManager);
     MediaSource mediaSource = mediaSourceFactory.createMediaSource(mediaItem);
 
     trackSelector = new DefaultTrackSelector(/* context= */ this);
-    DefaultTrackSelector.Parameters trackSelectionParameters =
-            new DefaultTrackSelector.ParametersBuilder(/* context= */ this)
-                    .setAllowVideoMixedMimeTypeAdaptiveness(true)
-                    .setAllowVideoNonSeamlessAdaptiveness(true)
-                    .build();
+    DefaultTrackSelector.Parameters trackSelectionParameters = new DefaultTrackSelector.ParametersBuilder(
+        /* context= */ this)
+        .setAllowVideoMixedMimeTypeAdaptiveness(true)
+        .setAllowVideoNonSeamlessAdaptiveness(true)
+        .build();
     player = new ExoPlayer.Builder(getApplicationContext())
-            .setTrackSelector(trackSelector)
-            .build();
+        .setTrackSelector(trackSelector)
+        .build();
     player.setTrackSelectionParameters(trackSelectionParameters);
     player.setMediaSource(mediaSource);
     player.prepare();
@@ -176,14 +176,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
   }
 
   private WidevineMediaDrmCallback createMediaDrmCallback(String licenseUrl, String[] keyRequestPropertiesArray) {
-    HttpDataSource.Factory licenseDataSourceFactory =
-            ((ExoplayerApplication) getApplication()).buildHttpDataSourceFactory();
-    WidevineMediaDrmCallback drmCallback =
-            new WidevineMediaDrmCallback(licenseUrl, licenseDataSourceFactory);
+    HttpDataSource.Factory licenseDataSourceFactory = ((ExoplayerApplication) getApplication())
+        .buildHttpDataSourceFactory();
+    WidevineMediaDrmCallback drmCallback = new WidevineMediaDrmCallback(licenseUrl, licenseDataSourceFactory);
     if (keyRequestPropertiesArray != null) {
       for (int i = 0; i < keyRequestPropertiesArray.length - 1; i += 2) {
         drmCallback.setKeyRequestProperty(keyRequestPropertiesArray[i],
-                keyRequestPropertiesArray[i + 1]);
+            keyRequestPropertiesArray[i + 1]);
       }
     }
     return drmCallback;
@@ -201,24 +200,20 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
       Throwable cause = e.getCause();
       if (cause instanceof MediaCodecRenderer.DecoderInitializationException) {
         // Special case for decoder initialization failures.
-        MediaCodecRenderer.DecoderInitializationException decoderInitializationException =
-                (MediaCodecRenderer.DecoderInitializationException) cause;
+        MediaCodecRenderer.DecoderInitializationException decoderInitializationException = (MediaCodecRenderer.DecoderInitializationException) cause;
         if (decoderInitializationException.codecInfo == null) {
           if (decoderInitializationException.getCause() instanceof MediaCodecUtil.DecoderQueryException) {
             errorString = getString(R.string.error_querying_decoders);
           } else if (decoderInitializationException.secureDecoderRequired) {
-            errorString =
-                    getString(
-                            R.string.error_no_secure_decoder, decoderInitializationException.mimeType);
+            errorString = getString(
+                R.string.error_no_secure_decoder, decoderInitializationException.mimeType);
           } else {
-            errorString =
-                    getString(R.string.error_no_decoder, decoderInitializationException.mimeType);
+            errorString = getString(R.string.error_no_decoder, decoderInitializationException.mimeType);
           }
         } else {
-          errorString =
-                  getString(
-                          R.string.error_instantiating_decoder,
-                          decoderInitializationException.codecInfo.name);
+          errorString = getString(
+              R.string.error_instantiating_decoder,
+              decoderInitializationException.codecInfo.name);
         }
       }
       return Pair.create(0, errorString);

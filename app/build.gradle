@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.sigmadrm.drmpacker"
-        minSdkVersion 21
+        minSdkVersion 23
         compileSdkVersion 35
         versionCode 1
         versionName "1.0"
@@ -35,12 +35,12 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     // Media3 ExoPlayer dependencies
-    implementation 'androidx.media3:media3-exoplayer:1.6.1'
-    implementation 'androidx.media3:media3-common:1.6.1'
-    implementation 'androidx.media3:media3-exoplayer-dash:1.6.1'
-    implementation 'androidx.media3:media3-ui:1.6.1'
+    implementation 'androidx.media3:media3-exoplayer:1.9.2'
+    implementation 'androidx.media3:media3-common:1.9.2'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.9.2'
+    implementation 'androidx.media3:media3-ui:1.9.2'
 
-    implementation("com.sigma.packer:media3-1.6.1:1.0.3")
+     implementation("com.sigma.packer:media3-1.9.2:1.0.3")
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
