@@ -22,7 +22,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Base64;
 import androidx.annotation.Nullable;
+import org.json.JSONException;
+import org.json.JSONObject;
 import androidx.media3.common.C;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DataSource;
@@ -165,10 +168,42 @@ public final class HttpMediaDrmCallback implements MediaDrmCallback {
     synchronized (keyRequestProperties) {
       requestProperties.putAll(keyRequestProperties);
     }
-    return executePost(
+    MediaDrmCallback.Response response = executePost(
         dataSourceFactory.createDataSource(),
         url,
         /* httpBody= */ request.getData(),
         requestProperties);
+
+    // CODE DEBUG: In nội dung License ra Logcat
+    android.util.Log.d("DRM_DEBUG", "Server URL: " + url);
+    if (response != null && response.data != null) {
+        String responseString = new String(response.data);
+        android.util.Log.d("DRM_DEBUG", "Server Response: " + responseString);
+        
+        // MỚI: Kiểm tra nếu là JSON từ SigmaDRM
+        if (responseString.trim().startsWith("{")) {
+            try {
+                JSONObject jsonObject = new JSONObject(responseString);
+                if (jsonObject.has("license")) {
+                    String licenseBase64 = jsonObject.getString("license");
+                    byte[] decodedLicense = Base64.decode(licenseBase64, Base64.DEFAULT);
+                    logDebug("JSON detected, license decoded successfully.");
+                    
+                    // Tạo Response mới với dữ liệu đã giải mã
+                    return new MediaDrmCallback.Response.Builder(decodedLicense)
+                        .setLoadEventInfo(response.loadEventInfo)
+                        .build();
+                }
+            } catch (JSONException e) {
+                logDebug("Error parsing JSON: " + e.getMessage());
+            }
+        }
+    }
+
+    return response;
+  }
+
+  private void logDebug(String msg) {
+      android.util.Log.d("DRM_DEBUG", msg);
   }
 }

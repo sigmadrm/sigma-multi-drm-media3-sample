@@ -1,5 +1,16 @@
 [
   {
+    "name": "SigmaDRM",
+    "samples": [
+      {
+        "name": "Renew License",
+        "uri": "https://sdrm-test.gviet.vn:9080/drm/static/vod_staging/the_box/manifest.mpd",
+        "drm_scheme": "widevine",
+        "drm_license_uri": "https://license-staging.sigmadrm.com/license/verify/widevine?merchantId=sctv&appId=RedTV&userId=U_Pnh_And&sessionId=S_Pnh_And"
+      }
+    ]
+  },
+  {
     "name": "Clear DASH",
     "samples": [
       {
