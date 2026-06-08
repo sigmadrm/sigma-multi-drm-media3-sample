@@ -3,8 +3,10 @@ package androidx.media3.demo.main;
 import android.content.Intent;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy;
 import androidx.media3.session.MediaSession;
@@ -36,14 +38,20 @@ public class PlaybackService extends MediaSessionService {
             }
         };
 
-        ExoPlayer player = new ExoPlayer.Builder(this)
+        // Trình phát chuẩn cho điện thoại
+        DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+
+        ExoPlayer player = new ExoPlayer.Builder(this, renderersFactory)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(this).setLoadErrorHandlingPolicy(retryPolicy))
                 .build();
+        
+        player.setVideoScalingMode(androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
         
         player.addAnalyticsListener(new AnalyticsListener() {
             @Override
             public void onDrmSessionAcquired(EventTime eventTime, int state) {
-                sendDrmLog("[DRM] Session Acquired");
+                sendDrmLog("[DRM] Session Acquired (State: " + state + ")");
             }
 
             @Override

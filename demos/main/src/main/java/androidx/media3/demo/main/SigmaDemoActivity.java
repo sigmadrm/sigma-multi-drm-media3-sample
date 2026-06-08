@@ -145,6 +145,7 @@ public class SigmaDemoActivity extends AppCompatActivity {
         if (player == null) { log("Connecting to service..."); return; }
 
         String manifestUri = editManifestUri.getText().toString().trim();
+        // ... (phần lấy các biến khác giữ nguyên)
         String baseUrl = editBaseUrl.getText().toString().trim();
         String merchantId = editMerchantId.getText().toString().trim();
         String appId = editAppId.getText().toString().trim();
@@ -166,7 +167,9 @@ public class SigmaDemoActivity extends AppCompatActivity {
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(manifestUri)
                 .setDrmConfiguration(new MediaItem.DrmConfiguration.Builder(C.WIDEVINE_UUID)
-                        .setLicenseUri(licenseUrl).setForceDefaultLicenseUri(true).build())
+                        .setLicenseUri(licenseUrl)
+                        .setForceDefaultLicenseUri(true)
+                        .build())
                 .build();
 
         player.setMediaItem(mediaItem);
