@@ -50,13 +50,17 @@ public class SigmaDemoActivity extends AppCompatActivity {
         }
     };
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sigma_demo);
 
-        registerReceiver(drmLogReceiver, new IntentFilter("SIGMA_DRM_LOG"));
+        // Đăng ký nhận Log từ Service - Fix cho Android 14
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(drmLogReceiver, new IntentFilter("SIGMA_DRM_LOG"), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(drmLogReceiver, new IntentFilter("SIGMA_DRM_LOG"));
+        }
 
         playerView = findViewById(R.id.player_view);
         textLogs = findViewById(R.id.text_logs);
@@ -92,11 +96,14 @@ public class SigmaDemoActivity extends AppCompatActivity {
         controllerFuture.addListener(() -> {
             try {
                 player = controllerFuture.get();
-                playerView.setPlayer(player);
-                setupPlayerListener();
-                log("Connected to Playback Service.");
+                if (player != null) {
+                    playerView.setPlayer(player);
+                    setupPlayerListener();
+                    log("Connected to Playback Service.");
+                }
             } catch (Exception e) {
                 log("Connection Error: " + e.getMessage());
+                android.util.Log.e("SigmaDemo", "Controller connection failed", e);
             }
         }, MoreExecutors.directExecutor());
 
