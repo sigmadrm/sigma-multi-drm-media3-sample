@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -168,11 +169,24 @@ public final class HttpMediaDrmCallback implements MediaDrmCallback {
     synchronized (keyRequestProperties) {
       requestProperties.putAll(keyRequestProperties);
     }
-    MediaDrmCallback.Response response = executePost(
-        dataSourceFactory.createDataSource(),
-        url,
-        /* httpBody= */ request.getData(),
-        requestProperties);
+    // Gửi thông tin về App UI để hiển thị Log
+    try {
+        android.util.Log.d("DRM_DEBUG", ">>> SENDING REQUEST to: " + url);
+        sendBroadcastLog("[NET] Requesting License...");
+    } catch (Exception ignored) {}
+
+    MediaDrmCallback.Response response;
+    try {
+        response = executePost(
+            dataSourceFactory.createDataSource(),
+            url,
+            /* httpBody= */ request.getData(),
+            requestProperties);
+        sendBroadcastLog("[NET] Response 200 OK");
+    } catch (Exception e) {
+        sendBroadcastLog("[NET] Request Failed: " + e.getMessage());
+        throw e;
+    }
 
     // CODE DEBUG: In nội dung License ra Logcat
     android.util.Log.d("DRM_DEBUG", "Server URL: " + url);
@@ -205,5 +219,22 @@ public final class HttpMediaDrmCallback implements MediaDrmCallback {
 
   private void logDebug(String msg) {
       android.util.Log.d("DRM_DEBUG", msg);
+  }
+
+  private void sendBroadcastLog(String msg) {
+      try {
+          // Lấy context ứng dụng thông qua Reflection để gửi Broadcast từ library
+          @SuppressLint("PrivateApi")
+          Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+          Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
+          android.content.Context context = (android.content.Context) activityThreadClass.getMethod("getApplication").invoke(activityThread);
+          
+          if (context != null) {
+              android.content.Intent intent = new android.content.Intent("SIGMA_DRM_LOG");
+              intent.setPackage(context.getPackageName());
+              intent.putExtra("message", msg);
+              context.sendBroadcast(intent);
+          }
+      } catch (Exception ignored) {}
   }
 }
