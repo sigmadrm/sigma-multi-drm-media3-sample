@@ -193,7 +193,8 @@ public class SigmaDemoActivity extends AppCompatActivity {
     private void log(String message) {
         String time = dateFormat.format(new Date());
         runOnUiThread(() -> {
-            textLogs.append("[" + time + "] " + message + "\n");
+            String currentLogs = textLogs.getText().toString();
+            textLogs.setText("[" + time + "] " + message + "\n" + currentLogs);
         });
     }
 
