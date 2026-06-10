@@ -6,6 +6,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -41,6 +45,33 @@ public class SigmaDemoActivity extends AppCompatActivity {
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateProgressAction = this::updateProgress;
     private ListenableFuture<MediaController> controllerFuture;
+    private boolean isNetworkLost = false;
+
+    private final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+        @Override
+        public void onAvailable(Network network) {
+            runOnUiThread(() -> {
+                if (isNetworkLost) {
+                    log(">>> NETWORK: Back online. Resuming playback...");
+                    isNetworkLost = false;
+                    if (player != null) {
+                        if (player.getPlayerError() != null) {
+                            player.prepare();
+                        }
+                        player.play();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onLost(Network network) {
+            runOnUiThread(() -> {
+                log(">>> NETWORK: Connection lost.");
+                isNetworkLost = true;
+            });
+        }
+    };
 
     private final BroadcastReceiver drmLogReceiver = new BroadcastReceiver() {
         @Override
@@ -108,6 +139,18 @@ public class SigmaDemoActivity extends AppCompatActivity {
         }, MoreExecutors.directExecutor());
 
         log("App Ready. Input data and press START.");
+
+        registerNetworkCallback();
+    }
+
+    private void registerNetworkCallback() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            NetworkRequest request = new NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+            cm.registerNetworkCallback(request, networkCallback);
+        }
     }
 
     private void setupPlayerListener() {
@@ -215,6 +258,10 @@ public class SigmaDemoActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(drmLogReceiver);
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            cm.unregisterNetworkCallback(networkCallback);
+        }
         MediaController.releaseFuture(controllerFuture);
     }
 }

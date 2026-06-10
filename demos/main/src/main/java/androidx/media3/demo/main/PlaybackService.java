@@ -20,14 +20,15 @@ public class PlaybackService extends MediaSessionService {
     public void onCreate() {
         super.onCreate();
 
-        // Thiết lập chính sách Retry: 3 lần thử lại, mỗi lần cách nhau cố định 5 giây
+        // Thiết lập chính sách Retry: 3 lần thử lại với khoảng cách tăng dần (3s, 5s, 10s)
         DefaultLoadErrorHandlingPolicy retryPolicy = new DefaultLoadErrorHandlingPolicy(3) {
             @Override
             public long getRetryDelayMsFor(LoadErrorInfo loadErrorInfo) {
-                // errorCount 1 là lần đầu lỗi, 2 là retry lần 1, 3 là retry lần 2...
-                if (loadErrorInfo.errorCount <= 3) {
-                    sendDrmLog(">>> SYSTEM: Will retry in 5 seconds... (Attempt " + loadErrorInfo.errorCount + "/3)");
-                    return 5000;
+                int errorCount = loadErrorInfo.errorCount;
+                if (errorCount <= 3) {
+                    long delayMs = (errorCount == 1) ? 3000 : (errorCount == 2 ? 5000 : 10000);
+                    sendDrmLog(">>> SYSTEM: Will retry in " + (delayMs / 1000) + " seconds... (Attempt " + errorCount + "/3)");
+                    return delayMs;
                 }
                 return androidx.media3.common.C.TIME_UNSET;
             }
