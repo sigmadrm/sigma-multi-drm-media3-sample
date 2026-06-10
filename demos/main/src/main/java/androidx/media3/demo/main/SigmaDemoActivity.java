@@ -116,11 +116,24 @@ public class SigmaDemoActivity extends AppCompatActivity {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 log(isPlaying ? ">>> EVENT: Play" : ">>> EVENT: Pause");
+                if (isPlaying) {
+                    updateProgress();
+                }
             }
             @Override
             public void onPlaybackStateChanged(int state) {
-                if (state == Player.STATE_READY) { log("Status: Playing (Ready)"); updateProgress(); }
-                else if (state == Player.STATE_BUFFERING) log("Status: Buffering...");
+                if (state == Player.STATE_READY) { 
+                    log("Status: Playing (Ready)"); 
+                    updateProgress(); 
+                } else if (state == Player.STATE_BUFFERING) {
+                    log("Status: Buffering...");
+                } else if (state == Player.STATE_ENDED) {
+                    log(">>> EVENT: Video Ended. Stopping session to prevent auto-renewal.");
+                    if (player != null) {
+                        player.stop();
+                        player.clearMediaItems();
+                    }
+                }
             }
             @Override
             public void onPlayerError(androidx.media3.common.PlaybackException error) {
