@@ -27,7 +27,10 @@ public class PlaybackService extends MediaSessionService {
                 int errorCount = loadErrorInfo.errorCount;
                 if (errorCount <= 3) {
                     long delayMs = (errorCount == 1) ? 3000 : (errorCount == 2 ? 5000 : 10000);
-                    sendDrmLog(">>> SYSTEM: Will retry in " + (delayMs / 1000) + " seconds... (Attempt " + errorCount + "/3)");
+                    // Dùng Handler để delay log hệ thống một chút, đảm bảo log lỗi của Request hiện lên trước
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        sendDrmLog(">>> SYSTEM: Will retry in " + (delayMs / 1000) + " seconds... (Attempt " + errorCount + "/3)");
+                    }, 100);
                     return delayMs;
                 }
                 
@@ -89,7 +92,9 @@ public class PlaybackService extends MediaSessionService {
     }
 
     private void sendDrmLog(String msg) {
+        android.util.Log.d("DRM_DEBUG", msg);
         Intent intent = new Intent("SIGMA_DRM_LOG");
+        intent.setPackage(getPackageName()); // Ép gói tin gửi đến chính ứng dụng này (Samsung/Android 14 fix)
         intent.putExtra("message", msg);
         sendBroadcast(intent);
     }

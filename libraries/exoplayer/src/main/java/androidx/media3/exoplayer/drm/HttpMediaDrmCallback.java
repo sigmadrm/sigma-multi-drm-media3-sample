@@ -184,7 +184,11 @@ public final class HttpMediaDrmCallback implements MediaDrmCallback {
             requestProperties);
         sendBroadcastLog("[NET] Response 200 OK");
     } catch (Exception e) {
-        sendBroadcastLog("[NET] Request Failed: " + e.getMessage());
+        String errorMsg = e.getMessage();
+        if (errorMsg != null && errorMsg.contains("No address associated with hostname")) {
+            errorMsg = "No Network Connection";
+        }
+        sendBroadcastLog("[ERR] Request Failed: " + errorMsg);
         throw e;
     }
 
