@@ -52,13 +52,20 @@ public class SigmaDemoActivity extends AppCompatActivity {
         public void onAvailable(Network network) {
             runOnUiThread(() -> {
                 if (isNetworkLost) {
-                    log(">>> NETWORK: Back online. Resuming playback...");
+                    log(">>> NETWORK: Back online. Checking recovery...");
                     isNetworkLost = false;
                     if (player != null) {
-                        if (player.getPlayerError() != null) {
+                        androidx.media3.common.PlaybackException error = player.getPlayerError();
+                        // Chỉ tự động phát lại nếu lỗi là do MẤT MẠNG đơn thuần
+                        if (error != null && error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
+                            log(">>> NETWORK: Recovering from network error...");
                             player.prepare();
+                            player.play();
+                        } else if (error == null) {
+                            player.play();
+                        } else {
+                            log(">>> NETWORK: Permanent error detected. Manual restart required.");
                         }
-                        player.play();
                     }
                 }
             });
@@ -180,11 +187,32 @@ public class SigmaDemoActivity extends AppCompatActivity {
             }
             @Override
             public void onPlayerError(androidx.media3.common.PlaybackException error) {
-                log("[PLAYER] Fatal Error: " + error.getErrorCodeName());
-                if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
+                log("[PLAYER] Fatal Error: " + error.getErrorCodeName() + " (Code: " + error.errorCode + ")");
+                
+                // Kiểm tra xem lỗi có phải do DRM gây ra không (kể cả khi bị bọc trong lỗi mạng)
+                boolean isDrmRelated = false;
+                Throwable cause = error.getCause();
+                while (cause != null) {
+                    // Kiểm tra qua class name để tránh lỗi import không tồn tại
+                    String className = cause.getClass().getName();
+                    if (className.contains("Drm") || className.contains("License")) {
+                        isDrmRelated = true;
+                        break;
+                    }
+                    cause = cause.getCause();
+                }
+
+                if (isDrmRelated || (error.errorCode >= 6000 && error.errorCode <= 6008) || 
+                    error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_DRM_LICENSE_EXPIRED) {
+                    
+                    log(">>> CRITICAL: DRM-related Failure detected. Killing session...");
+                    if (player != null) {
+                        player.stop();
+                        player.clearMediaItems();
+                    }
+                } else if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
                     log(">>> HINT: No Network Connection.");
                 }
-                // Các lỗi DRM đã được PlaybackService báo cáo chi tiết, không cần báo lại ở đây
             }
         });
     }

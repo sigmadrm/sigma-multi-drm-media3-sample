@@ -30,6 +30,9 @@ public class PlaybackService extends MediaSessionService {
                     sendDrmLog(">>> SYSTEM: Will retry in " + (delayMs / 1000) + " seconds... (Attempt " + errorCount + "/3)");
                     return delayMs;
                 }
+                
+                // Sau 3 lần thử thất bại, nếu là lỗi liên quan đến DRM/License, chúng ta trả về TIME_UNSET
+                // để báo lỗi Fatal vĩnh viễn thay vì treo ở lỗi mạng.
                 return androidx.media3.common.C.TIME_UNSET;
             }
 
@@ -43,8 +46,14 @@ public class PlaybackService extends MediaSessionService {
         DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this)
                 .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
 
+        // Cấu hình DRM Provider với cùng chính sách Retry
+        androidx.media3.exoplayer.drm.DefaultDrmSessionManagerProvider drmProvider = new androidx.media3.exoplayer.drm.DefaultDrmSessionManagerProvider();
+        drmProvider.setDrmLoadErrorHandlingPolicy(retryPolicy);
+
         ExoPlayer player = new ExoPlayer.Builder(this, renderersFactory)
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(this).setLoadErrorHandlingPolicy(retryPolicy))
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(this)
+                        .setLoadErrorHandlingPolicy(retryPolicy)
+                        .setDrmSessionManagerProvider(drmProvider))
                 .build();
         
         player.setVideoScalingMode(androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
@@ -68,6 +77,11 @@ public class PlaybackService extends MediaSessionService {
             @Override
             public void onDrmSessionManagerError(EventTime eventTime, Exception error) {
                 sendDrmLog("[DRM] Session Error: " + error.getMessage());
+            }
+
+            @Override
+            public void onDrmKeysRemoved(EventTime eventTime) {
+                sendDrmLog("[DRM] Keys Removed/Expired");
             }
         });
 
