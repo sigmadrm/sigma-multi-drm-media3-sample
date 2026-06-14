@@ -42,6 +42,10 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
     private final String defaultLicenseUrl;
     private final boolean forceDefaultLicenseUrl;
     private final Map<String, String> keyRequestProperties;
+    private String merchantId;
+    private String appId;
+    private String userId;
+    private String sessionId;
 
     /**
      * @param defaultLicenseUrl The default license URL. Used for key requests that
@@ -72,6 +76,13 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
         this.defaultLicenseUrl = defaultLicenseUrl;
         this.forceDefaultLicenseUrl = forceDefaultLicenseUrl;
         this.keyRequestProperties = new HashMap<>();
+    }
+
+    public void setSigmaConfig(String merchantId, String appId, String userId, String sessionId) {
+        this.merchantId = merchantId;
+        this.appId = appId;
+        this.userId = userId;
+        this.sessionId = sessionId;
     }
 
     /**
@@ -170,10 +181,10 @@ public final class WidevineMediaDrmCallback implements MediaDrmCallback {
 
     private String getCustomData(KeyRequest keyRequest) throws Exception {
         JSONObject customData = new JSONObject();
-        customData.put("merchantId", "sctv");
-        customData.put("appId", "RedTV");
-        customData.put("userId", "your_user_id");
-        customData.put("sessionId", "your_session_id");
+        customData.put("merchantId", this.merchantId);
+        customData.put("appId", this.appId);
+        customData.put("userId", this.userId);
+        customData.put("sessionId", this.sessionId);
 
         RequestInfo requestInfo = SigmaDrmPacker.requestInfo(keyRequest.getData());
         customData.put("reqId", requestInfo.requestId);
